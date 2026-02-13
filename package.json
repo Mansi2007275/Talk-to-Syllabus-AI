@@ -9,7 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@huggingface/inference": "^2.7.0",
+    "@huggingface/inference": "^4.13.12",
     "@supabase/supabase-js": "^2.39.0",
     "@tanstack/react-query": "^5.17.0",
     "clsx": "^2.1.0",

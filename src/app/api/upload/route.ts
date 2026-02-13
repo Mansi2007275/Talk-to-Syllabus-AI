@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Step 4: Chunk the text
-    const chunks = chunkText(text, 600, 200);
+    const chunks = chunkText(text, 200, 50);
 
     // Step 5: Generate embeddings for all chunks
     const embeddings = await generateEmbeddings(chunks.map((c) => c));
@@ -126,8 +126,8 @@ export async function POST(request: NextRequest) {
       metadata: { char_count: content.length },
     }));
 
-    // Insert in batches of 50
-    const batchSize = 50;
+    // Insert in batches of 20
+    const batchSize = 20;
     for (let i = 0; i < chunkRecords.length; i += batchSize) {
       const batch = chunkRecords.slice(i, i + batchSize);
       const { error: insertError } = await supabase

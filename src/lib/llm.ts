@@ -2,8 +2,8 @@ import { HfInference } from "@huggingface/inference";
 
 const hf = new HfInference(process.env.HUGGINGFACE_API_KEY || "");
 
-// Use a free, capable model from HuggingFace
-const LLM_MODEL = "mistralai/Mixtral-8x7B-Instruct-v0.1";
+// Use a free, capable model from HuggingFace that is confirmed to work on router
+const LLM_MODEL = "meta-llama/Meta-Llama-3-8B-Instruct";
 
 export type AnswerMode = "simple" | "exam" | "summary";
 
@@ -36,25 +36,6 @@ Do NOT make up information.`,
 };
 
 /**
- * Build the full prompt with context and question.
- */
-function buildPrompt(
-  question: string,
-  context: string,
-  mode: AnswerMode
-): string {
-  return `${SYSTEM_PROMPTS[mode]}
-
---- SYLLABUS CONTEXT ---
-${context}
---- END CONTEXT ---
-
-Student's Question: ${question}
-
-Answer:`;
-}
-
-/**
  * Call the LLM to generate an answer.
  */
 export async function generateAnswer(
@@ -63,37 +44,39 @@ export async function generateAnswer(
   mode: AnswerMode = "simple"
 ): Promise<string> {
   const context = contextChunks.join("\n\n---\n\n");
-  const prompt = buildPrompt(question, context, mode);
+
+  const systemContent = SYSTEM_PROMPTS[mode];
+  const userContent = `--- SYLLABUS CONTEXT ---\n${context}\n--- END CONTEXT ---\n\nStudent's Question: ${question}`;
 
   try {
-    const response = await hf.textGeneration({
+    const response = await hf.chatCompletion({
       model: LLM_MODEL,
-      inputs: prompt,
-      parameters: {
-        max_new_tokens: 800,
-        temperature: 0.3,
-        top_p: 0.9,
-        repetition_penalty: 1.1,
-        return_full_text: false,
-      },
+      messages: [
+        { role: "system", content: systemContent },
+        { role: "user", content: userContent },
+      ],
+      max_tokens: 800,
+      temperature: 0.3,
+      top_p: 0.9,
     });
 
-    return response.generated_text.trim();
+    return response.choices[0].message.content || "No answer generated.";
   } catch (error: any) {
-    // Fallback: try a smaller model if the primary is unavailable
-    console.error("Primary LLM failed, trying fallback:", error.message);
+    console.error("Primary LLM failed:", error.message);
 
+    // Fallback to a backup model if primary fails
     try {
-      const fallbackResponse = await hf.textGeneration({
-        model: "microsoft/DialoGPT-large",
-        inputs: prompt,
-        parameters: {
-          max_new_tokens: 500,
-          temperature: 0.3,
-          return_full_text: false,
-        },
+      console.log("Attempting fallback to Zephyr...");
+      const fallbackResponse = await hf.chatCompletion({
+        model: "HuggingFaceH4/zephyr-7b-beta",
+        messages: [
+          { role: "system", content: systemContent },
+          { role: "user", content: userContent },
+        ],
+        max_tokens: 500,
+        temperature: 0.3,
       });
-      return fallbackResponse.generated_text.trim();
+      return fallbackResponse.choices[0].message.content || "No answer generated.";
     } catch (fallbackError: any) {
       console.error("Fallback LLM also failed:", fallbackError.message);
       return "I'm sorry, the AI service is temporarily unavailable. Please try again in a moment.";

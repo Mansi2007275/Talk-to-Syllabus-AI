@@ -103,7 +103,26 @@ export function ChatInterface({ selectedCourse }: ChatInterfaceProps) {
       {/* Mode Toggle */}
       <div className="px-4 py-3 border-b border-border flex items-center justify-between">
         <span className="text-sm text-muted-foreground">Answer Mode</span>
-        <ModeToggle mode={mode} onChange={setMode} />
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              const text = messages
+                .map((m) => `${m.role.toUpperCase()}: ${m.content}`)
+                .join("\n\n");
+              const blob = new Blob([text], { type: "text/plain" });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = `chat-history-${selectedCourse}.txt`;
+              a.click();
+            }}
+            className="text-xs px-2 py-1 rounded hover:bg-secondary text-muted-foreground transition-colors"
+            title="Export Chat"
+          >
+            Export
+          </button>
+          <ModeToggle mode={mode} onChange={setMode} />
+        </div>
       </div>
 
       {/* Messages Area */}

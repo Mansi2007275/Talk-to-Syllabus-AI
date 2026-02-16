@@ -159,6 +159,19 @@ Open [http://localhost:3000](http://localhost:3000)
 - **Analytics Ready**: Every query is logged for pattern analysis
 
 ---
+Why This Matters
+
+In India alone, millions of engineering students rely on static syllabus PDFs.
+
+Talk-to-Syllabus AI converts institutional academic data into an:
+
+Interactive system
+
+Scalable cloud-native product
+
+Cost-efficient AI solution
+
+Real-world deployable tool
 
 ## Project Structure
 
